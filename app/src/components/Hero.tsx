@@ -24,9 +24,6 @@ export default function Hero() {
             Lihat cara kerja
           </a>
         </div>
-        <div className="micro-note">
-          Prototype awal untuk eksplorasi alur sistem · bukan aplikasi final
-        </div>
       </div>
       <div className="hero-art" aria-label="Ilustrasi compact blush dan swatch warna">
         <div className="compact"></div>

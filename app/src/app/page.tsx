@@ -14,8 +14,6 @@ export default function Home() {
       </main>
       <footer className="footer">
         <strong>blushé</strong> · Prototype rancangan sistem rekomendasi blush on
-        <br />
-        Digunakan untuk diskusi awal dan konsultasi penelitian. Bukan aplikasi final atau rekomendasi kecantikan tervalidasi.
       </footer>
     </>
   );

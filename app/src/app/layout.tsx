@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Blushé — Temukan shade yang terasa milikmu',
+  title: 'Blushé',
   description: 'Sistem Pendukung Keputusan Rekomendasi Produk dan Shade Blush On',
 };
 
