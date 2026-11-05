@@ -29,24 +29,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Admin Topbar */}
       <header
         style={{
-          height: '68px',
+          minHeight: '68px',
+          height: 'auto',
           borderBottom: '1px solid var(--line)',
           background: 'rgba(255, 253, 250, 0.95)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 max(4vw, 24px)',
+          padding: '10px max(4vw, 24px)',
           position: 'sticky',
           top: 0,
           zIndex: 30,
+          flexWrap: 'wrap',
+          gap: '12px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <Link href="/" className="brand" style={{ fontSize: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+          <Link href="/" className="brand" style={{ fontSize: '20px', textDecoration: 'none', color: 'inherit' }}>
             <span className="brand-mark" style={{ width: '26px', height: '26px' }}></span> blushé admin
           </Link>
 
-          <nav style={{ display: 'flex', gap: '6px' }}>
+          <nav style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {navItems.map((item) => {
               const active = pathname === item.href;
               return (
@@ -74,6 +77,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <Link
             href="/"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               fontSize: '12px',
               color: 'var(--muted)',

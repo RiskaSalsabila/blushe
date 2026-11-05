@@ -51,7 +51,13 @@ export default function Navbar() {
         <a href="#cara-kerja">Cara kerja</a>
         <a href="#prototype">Coba prototype</a>
         <a href="#catatan">Tentang rancangan</a>
-        <a href="/admin" style={{ opacity: 0.8, fontSize: '11px' }}>
+        <a
+          href="/admin"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ opacity: 0.9, fontSize: '11px', color: 'var(--rose-dark)', fontWeight: 600 }}
+          title="Buka portal admin di tab baru"
+        >
           Portal Admin ↗
         </a>
       </nav>

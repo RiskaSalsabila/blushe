@@ -940,10 +940,15 @@ button {
     grid-template-columns: repeat(3, 1fr);
   }
   .navlinks {
-    gap: 12px;
+    gap: 16px;
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
   }
-  .navlinks a:not(:last-child) {
-    display: none;
+  .navlinks a {
+    display: inline-block;
+    font-size: 12px;
   }
   .admin-grid {
     grid-template-columns: repeat(2, 1fr);
