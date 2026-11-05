@@ -136,25 +136,43 @@ export default function AdminVikorAuditPage() {
               </div>
               <div style={{ padding: '12px', background: '#faf5f1', borderRadius: '10px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--muted)' }}>Threshold Keunggulan (DQ)</div>
-                <b style={{ fontSize: '18px', color: 'var(--ink)' }}>DQ = {auditData.audit?.DQ ?? '-'}</b>
+                <b style={{ fontSize: '18px', color: 'var(--ink)' }}>
+                  {auditData.candidatesCount >= 2 ? `DQ = ${auditData.audit?.DQ ?? '-'}` : 'N/A (m < 2)'}
+                </b>
                 <div style={{ fontSize: '10px', color: 'var(--muted)' }}>1 / (m - 1)</div>
               </div>
               <div style={{ padding: '12px', background: '#faf5f1', borderRadius: '10px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--muted)' }}>C1: Acceptable Advantage</div>
-                <b style={{ fontSize: '14px', color: auditData.audit?.acceptableAdvantage ? 'var(--green)' : '#c53030' }}>
-                  {auditData.audit?.acceptableAdvantage ? '✓ Terpenuhi' : '✕ Tidak Terpenuhi'}
+                <b style={{ fontSize: '14px', color: auditData.candidatesCount >= 2 && auditData.audit?.acceptableAdvantage ? 'var(--green)' : 'var(--muted)' }}>
+                  {auditData.candidatesCount >= 2
+                    ? auditData.audit?.acceptableAdvantage
+                      ? '✓ Terpenuhi'
+                      : '✕ Tidak Terpenuhi'
+                    : 'N/A'}
                 </b>
               </div>
               <div style={{ padding: '12px', background: '#faf5f1', borderRadius: '10px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--muted)' }}>C2: Acceptable Stability</div>
-                <b style={{ fontSize: '14px', color: auditData.audit?.acceptableStability ? 'var(--green)' : '#c53030' }}>
-                  {auditData.audit?.acceptableStability ? '✓ Terpenuhi' : '✕ Tidak Terpenuhi'}
+                <b style={{ fontSize: '14px', color: auditData.candidatesCount >= 2 && auditData.audit?.acceptableStability ? 'var(--green)' : 'var(--muted)' }}>
+                  {auditData.candidatesCount >= 2
+                    ? auditData.audit?.acceptableStability
+                      ? '✓ Terpenuhi'
+                      : '✕ Tidak Terpenuhi'
+                    : 'N/A'}
                 </b>
               </div>
             </div>
 
+            {auditData.audit?.statusMessage && (
+              <div style={{ padding: '12px 14px', borderRadius: '10px', background: '#faf5f1', border: '1px solid #f0e3dd', fontSize: '11px', color: '#776761', marginBottom: '18px' }}>
+                <strong>Catatan Evaluasi:</strong> {auditData.audit.statusMessage}
+              </div>
+            )}
+
             {/* Tabel Peringkat */}
-            <h4 style={{ fontSize: '14px', margin: '0 0 10px' }}>Tabel Nilai Indeks Kompromi (Q) & Peringkat Alternatif</h4>
+            <h4 style={{ fontSize: '14px', margin: '0 0 10px' }}>
+              {auditData.candidatesCount >= 2 ? 'Tabel Nilai Indeks Kompromi (Q) & Peringkat Alternatif' : 'Daftar Alternatif Lolos Filter (Tanpa VIKOR)'}
+            </h4>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
@@ -172,20 +190,26 @@ export default function AdminVikorAuditPage() {
                 <tbody>
                   {auditData.results.map((r: any) => (
                     <tr key={r.alternativeId} style={{ borderBottom: '1px solid #f4ece6' }}>
-                      <td style={{ padding: '10px', fontWeight: 700, color: 'var(--rose-dark)' }}>#{r.rank}</td>
+                      <td style={{ padding: '10px', fontWeight: 700, color: 'var(--rose-dark)' }}>
+                        {r.rank ? `#${r.rank}` : '-'}
+                      </td>
                       <td style={{ padding: '10px', fontWeight: 600 }}>{r.name}</td>
                       <td style={{ padding: '10px' }}>{r.formula}</td>
                       <td style={{ padding: '10px' }}>Rp{Number(r.price).toLocaleString('id-ID')}</td>
-                      <td style={{ padding: '10px' }}>{r.S}</td>
-                      <td style={{ padding: '10px' }}>{r.R}</td>
-                      <td style={{ padding: '10px', fontWeight: 700 }}>{r.Q}</td>
+                      <td style={{ padding: '10px' }}>{r.S !== undefined ? r.S : '-'}</td>
+                      <td style={{ padding: '10px' }}>{r.R !== undefined ? r.R : '-'}</td>
+                      <td style={{ padding: '10px', fontWeight: 700 }}>{r.Q !== undefined ? r.Q : '-'}</td>
                       <td style={{ padding: '10px' }}>
-                        {r.isCompromise ? (
-                          <span style={{ background: '#def7ec', color: '#03543f', padding: '3px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 600 }}>
-                            Solusi Kompromi
-                          </span>
+                        {auditData.candidatesCount >= 2 ? (
+                          r.isCompromise ? (
+                            <span style={{ background: '#def7ec', color: '#03543f', padding: '3px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 600 }}>
+                              Solusi Kompromi
+                            </span>
+                          ) : (
+                            <span style={{ color: 'var(--muted)', fontSize: '11px' }}>Alternatif</span>
+                          )
                         ) : (
-                          <span style={{ color: 'var(--muted)', fontSize: '11px' }}>Alternatif</span>
+                          <span style={{ color: 'var(--muted)', fontSize: '11px' }}>Alternatif Tunggal</span>
                         )}
                       </td>
                     </tr>

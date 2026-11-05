@@ -74,6 +74,7 @@ export async function POST(request: Request) {
       return true;
     });
 
+    // Kondisi 1: Alternatif = 0 (Empty State, jangan jalankan VIKOR)
     if (filtered.length === 0) {
       return NextResponse.json({
         success: true,
@@ -85,6 +86,8 @@ export async function POST(request: Request) {
           budget: budget === 999999 ? 'Tanpa batas' : `Maks. Rp${budget.toLocaleString('id-ID')}`,
         },
         candidatesCount: 0,
+        isSingleCandidate: false,
+        isVikorRun: false,
         results: [],
         audit: null,
         isEmpty: true,
@@ -120,10 +123,74 @@ export async function POST(request: Request) {
       };
     });
 
-    // 5. Eksekusi Algoritma VIKOR
+    // Kondisi 2: Alternatif = 1 (Tunggal, jangan jalankan VIKOR / jangan pemeringkatan)
+    if (candidates.length === 1) {
+      const cand = candidates[0];
+
+      // Catat log sesi ke DB tanpa hasil VIKOR palsu
+      try {
+        db.prepare(`
+          INSERT INTO recommendation_runs (
+            skin_tone, undertone, selected_colors, selected_formula, budget_limit, candidates_count, v_parameter
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          tone || '-',
+          undertone || '-',
+          JSON.stringify(colors),
+          formula || 'No preference',
+          budget,
+          1,
+          0.5
+        );
+      } catch (dbErr) {
+        console.warn('Logging recommendation run failed:', dbErr);
+      }
+
+      return NextResponse.json({
+        success: true,
+        summary: {
+          tone,
+          undertone,
+          colors,
+          formula: formula === 'No preference' ? 'Bebas' : formula,
+          budget: budget === 999999 ? 'Tanpa batas' : `Maks. Rp${budget.toLocaleString('id-ID')}`,
+        },
+        candidatesCount: 1,
+        isSingleCandidate: true,
+        isVikorRun: false,
+        results: [
+          {
+            alternativeId: cand.id,
+            name: cand.name,
+            brand: cand.brand,
+            shade: cand.shade,
+            formula: cand.formula,
+            price: cand.price,
+            colorHex: cand.colorHex,
+            isCompromise: false,
+            metadata: cand.metadata,
+            // rank dan Q sengaja ditiadakan
+          },
+        ],
+        audit: {
+          totalAlternatives: 1,
+          DQ: 0,
+          acceptableAdvantage: false,
+          acceptableStability: false,
+          compromiseCount: 0,
+          statusMessage:
+            'Hanya satu alternatif yang memenuhi filter sehingga belum dapat dilakukan pemeringkatan VIKOR.',
+        },
+        isEmpty: false,
+        note:
+          'Hanya satu alternatif yang memenuhi filter sehingga belum dapat dilakukan pemeringkatan VIKOR.',
+      });
+    }
+
+    // Kondisi 3: Alternatif >= 2 (Kalkulasi VIKOR Penuh)
     const vikorOutput = calculateVikor(candidates, criteriaConfig, 0.5);
 
-    // 6. Catat audit sesi rekomendasi ke SQLite
+    // Catat audit sesi rekomendasi ke SQLite
     try {
       const runInsert = db.prepare(`
         INSERT INTO recommendation_runs (
@@ -162,10 +229,10 @@ export async function POST(request: Request) {
         insertResult.run(
           runId,
           res.alternativeId,
-          res.S,
-          res.R,
-          res.Q,
-          res.rank,
+          res.S ?? 0,
+          res.R ?? 0,
+          res.Q ?? 0,
+          res.rank ?? 0,
           res.isCompromise ? 1 : 0
         );
       }
@@ -183,6 +250,8 @@ export async function POST(request: Request) {
         budget: budget === 999999 ? 'Tanpa batas' : `Maks. Rp${budget.toLocaleString('id-ID')}`,
       },
       candidatesCount: candidates.length,
+      isSingleCandidate: false,
+      isVikorRun: true,
       results: vikorOutput.ranked.slice(0, 3), // Menampilkan 3 teratas sesuai prototype visual
       audit: {
         totalAlternatives: vikorOutput.ranked.length,
@@ -190,6 +259,7 @@ export async function POST(request: Request) {
         acceptableAdvantage: vikorOutput.acceptableAdvantage,
         acceptableStability: vikorOutput.acceptableStability,
         compromiseCount: vikorOutput.compromiseAlternatives.length,
+        statusMessage: vikorOutput.statusMessage,
       },
       isEmpty: false,
     });

@@ -31,6 +31,8 @@ export default function Wizard() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [isEmpty, setIsEmpty] = useState(false);
+  const [isSingleCandidate, setIsSingleCandidate] = useState(false);
+  const [auditInfo, setAuditInfo] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<ModalProductData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -46,7 +48,9 @@ export default function Wizard() {
       const data = await res.json();
       if (data.success) {
         setIsEmpty(data.isEmpty || data.results.length === 0);
+        setIsSingleCandidate(Boolean(data.isSingleCandidate));
         setResults(data.results || []);
+        setAuditInfo(data.audit || null);
       }
     } catch (e) {
       console.error('Failed to fetch recommendations:', e);
@@ -94,6 +98,8 @@ export default function Wizard() {
     setStep(0);
     setResults([]);
     setIsEmpty(false);
+    setIsSingleCandidate(false);
+    setAuditInfo(null);
     const el = document.getElementById('prototype');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
@@ -313,13 +319,15 @@ export default function Wizard() {
             <section className={`step ${step === 3 ? 'active' : ''}`} data-step="3">
               <div className="result-head">
                 <div>
-                  <div className="eyebrow">A little preview</div>
-                  <h3>Contoh rekomendasi untukmu</h3>
+                  <div className="eyebrow">{isSingleCandidate ? 'Single match' : 'A little preview'}</div>
+                  <h3>{isSingleCandidate ? 'Alternatif tersedia untukmu' : 'Contoh rekomendasi untukmu'}</h3>
                 </div>
-                <span className="demo-tag">DATA SIMULASI</span>
+                <span className="demo-tag">{isSingleCandidate ? 'FILTER TUNGGAL' : 'DATA SIMULASI'}</span>
               </div>
               <p className="step-intro">
-                Berikut contoh tampilan hasil setelah preferensimu dipilih. Produk dan urutannya dihitung menggunakan mesin VIKOR dengan kriteria kecocokan dinamis.
+                {isSingleCandidate
+                  ? 'Hanya satu alternatif yang memenuhi filter saat ini, sehingga belum dapat dilakukan pemeringkatan VIKOR (memerlukan minimal 2 alternatif untuk dibandingkan).'
+                  : 'Berikut contoh tampilan hasil setelah preferensimu dipilih. Produk dan urutannya dihitung menggunakan mesin VIKOR dengan kriteria kecocokan dinamis.'}
               </p>
 
               <div className="profile-summary" id="profileSummary">
@@ -368,14 +376,17 @@ export default function Wizard() {
                         style={{ ['--shade' as any]: p.colorHex || '#cf8583' }}
                       ></div>
                       <div>
-                        <div className="rank">
-                          Contoh peringkat {p.rank || i + 1}
-                          {p.isCompromise && (
-                            <span style={{ marginLeft: '6px', color: 'var(--green)' }}>
-                              · Solusi Kompromi
-                            </span>
-                          )}
-                        </div>
+                        {/* Jika hanya 1 alternatif, jangan tampilkan label Peringkat 1 atau Solusi Kompromi */}
+                        {!isSingleCandidate && p.rank && (
+                          <div className="rank">
+                            Contoh peringkat {p.rank}
+                            {p.isCompromise && (
+                              <span style={{ marginLeft: '6px', color: 'var(--green)' }}>
+                                · Solusi Kompromi
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <h4>
                           {p.brand} · {p.metadata?.productName || p.name}
                         </h4>
@@ -387,7 +398,8 @@ export default function Wizard() {
                         <div className="product-meta">
                           <span>{p.formula}</span>
                           <span>{p.metadata?.colorFamily || 'Universal'}</span>
-                          {p.Q !== undefined && (
+                          {/* Jika hanya 1 alternatif, jangan tampilkan Q */}
+                          {!isSingleCandidate && p.Q !== undefined && (
                             <span title="Nilai indeks kompromi VIKOR (makin kecil makin baik)">
                               Q = {p.Q}
                             </span>
@@ -405,13 +417,29 @@ export default function Wizard() {
                 </div>
               )}
 
+              {/* Keterangan transparan untuk kondisi 1 alternatif */}
+              {isSingleCandidate && (
+                <div className="inline-note" style={{ marginTop: '16px' }}>
+                  <strong>Keterangan:</strong> Hanya satu alternatif yang memenuhi filter Anda. Alternatif di atas bukan merupakan hasil rekomendasi pemeringkatan VIKOR karena metode kompromi multikriteria membutuhkan minimal 2 alternatif untuk dibandingkan.
+                </div>
+              )}
+
+              {/* Status evaluasi kompromi transparan untuk >= 2 alternatif */}
+              {!isSingleCandidate && auditInfo && !isEmpty && results.length > 1 && (
+                <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: '10px', background: '#faf5f1', border: '1px solid #f0e3dd', fontSize: '11px', color: '#776761', lineHeight: 1.6 }}>
+                  <strong>Status Evaluasi Kompromi VIKOR:</strong> {auditInfo.statusMessage}
+                </div>
+              )}
+
               <div className="method-note">
-                <strong>Catatan metodologi:</strong> daftar ini dihitung menggunakan mesin VIKOR berdasar matriks simulasi awal. Data produk, kriteria, bobot, dan skala penilaian masih perlu ditetapkan melalui studi literatur dan arahan dosen pembimbing.
+                <strong>Catatan metodologi:</strong> {isSingleCandidate
+                  ? 'Pemeringkatan multikriteria VIKOR belum dijalankan karena hanya satu alternatif yang lolos batasan filter. Ubah preferensi untuk melihat lebih banyak pilihan.'
+                  : 'Daftar ini dihitung menggunakan mesin VIKOR berdasar matriks simulasi awal. Data produk, kriteria, bobot, dan skala penilaian masih perlu ditetapkan melalui studi literatur dan arahan dosen pembimbing.'}
               </div>
 
               <div style={{ marginTop: '18px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <button type="button" className="secondary" onClick={editPreferences}>
-                  Ubah preferensi
+                  {isSingleCandidate ? 'Ubah filter untuk alternatif lain' : 'Ubah preferensi'}
                 </button>
                 <button type="button" className="text-btn" onClick={resetPrototype}>
                   Mulai dari awal
