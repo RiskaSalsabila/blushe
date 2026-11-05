@@ -3,11 +3,14 @@ import { getDb } from '@/lib/db';
 import { calculateVikor, CandidateAlternative, CriterionConfig } from '@/lib/vikor';
 import { scoreSkinTone, scoreUndertone, scoreColorPreference } from '@/lib/scoring';
 import { seedDatabase } from '@/lib/seed';
+import { getCurrentUser } from '@/lib/user-auth';
 
 export async function POST(request: Request) {
   try {
     seedDatabase(); // Pastikan DB terinisialisasi
     const db = getDb();
+    const currentUser = await getCurrentUser();
+    const currentUserId = currentUser ? currentUser.id : null;
 
     const body = await request.json();
     const { tone, undertone, colors = [], formula, budget = 999999 } = body;
@@ -131,9 +134,10 @@ export async function POST(request: Request) {
       try {
         db.prepare(`
           INSERT INTO recommendation_runs (
-            skin_tone, undertone, selected_colors, selected_formula, budget_limit, candidates_count, v_parameter
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            user_id, skin_tone, undertone, selected_colors, selected_formula, budget_limit, candidates_count, v_parameter
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
+          currentUserId,
           tone || '-',
           undertone || '-',
           JSON.stringify(colors),
@@ -194,9 +198,10 @@ export async function POST(request: Request) {
     try {
       const runInsert = db.prepare(`
         INSERT INTO recommendation_runs (
-          skin_tone, undertone, selected_colors, selected_formula, budget_limit, candidates_count, v_parameter
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          user_id, skin_tone, undertone, selected_colors, selected_formula, budget_limit, candidates_count, v_parameter
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
+        currentUserId,
         tone || '-',
         undertone || '-',
         JSON.stringify(colors),

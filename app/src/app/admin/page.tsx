@@ -107,6 +107,7 @@ export default function AdminDashboardPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--line)', textAlign: 'left', color: 'var(--muted)' }}>
                   <th style={{ padding: '10px 12px' }}>ID</th>
+                  <th style={{ padding: '10px 12px' }}>Pengguna</th>
                   <th style={{ padding: '10px 12px' }}>Skin Tone</th>
                   <th style={{ padding: '10px 12px' }}>Undertone</th>
                   <th style={{ padding: '10px 12px' }}>Warna Favorit</th>
@@ -127,6 +128,16 @@ export default function AdminDashboardPage() {
                   return (
                     <tr key={r.id} style={{ borderBottom: '1px solid #f2ece7' }}>
                       <td style={{ padding: '10px 12px', fontWeight: 600 }}>#{r.id}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        {r.user_name ? (
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.user_name}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--muted)' }}>{r.user_email}</div>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--muted)', fontStyle: 'italic', fontSize: '11px' }}>Tamu</span>
+                        )}
+                      </td>
                       <td style={{ padding: '10px 12px' }}>{r.skin_tone}</td>
                       <td style={{ padding: '10px 12px' }}>{r.undertone}</td>
                       <td style={{ padding: '10px 12px' }}>{colorsStr || '-'}</td>

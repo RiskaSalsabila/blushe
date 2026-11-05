@@ -83,6 +83,7 @@ export function initSchema(db: Database.Database) {
     -- 6. Recommendation Runs (Dynamic audit logs)
     CREATE TABLE IF NOT EXISTS recommendation_runs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
       skin_tone TEXT NOT NULL,
       undertone TEXT NOT NULL,
       selected_colors TEXT NOT NULL,
@@ -90,7 +91,20 @@ export function initSchema(db: Database.Database) {
       budget_limit INTEGER,
       candidates_count INTEGER,
       v_parameter REAL NOT NULL DEFAULT 0.5,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    -- 6b. Users (Pengguna Aplikasi)
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      display_name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      privacy_consent_at DATETIME NOT NULL,
+      privacy_notice_version TEXT NOT NULL DEFAULT 'v1.0',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     -- 7. Recommendation Scores (Dynamic Decision Matrix)
@@ -128,4 +142,15 @@ export function initSchema(db: Database.Database) {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migrasi aman: Pastikan kolom user_id ada di recommendation_runs jika database sudah ada sebelumnya
+  try {
+    const runCols = db.pragma('table_info(recommendation_runs)') as Array<{ name: string }>;
+    const hasUserId = runCols.some((col) => col.name === 'user_id');
+    if (!hasUserId) {
+      db.exec('ALTER TABLE recommendation_runs ADD COLUMN user_id INTEGER REFERENCES users(id)');
+    }
+  } catch (err) {
+    console.warn('Migration warning for recommendation_runs.user_id:', err);
+  }
 }
